@@ -151,41 +151,35 @@ def main():
         ["Accuracy", "Beamforming Maxima", "Interquartile Range", "Mean Absolute Error", 
         "Mean Difference", "Mean Distance", "Median Distance", "Standard Deviation"]
     )
+    
+    only_xy = st.sidebar.checkbox("Only x and y values", key="ignore_z")
 
     if category == "Accuracy":
         distance = st.sidebar.selectbox("Select Distance (cm)", [5, 10, 15, 20, 30, 40, 50, 60])
-        param_3d = f"accuracy_{distance}cm"
-        param_2d = f"accuracy_{distance}cm_xy"
+        param_3d = f"accuracy_{distance}cm_xy" if only_xy else f"accuracy_{distance}cm"
         color_range = [0, 1]
     elif category == "Beamforming Maxima":
-        param_3d = "beamforming_dist"
-        param_2d = "beamforming_dist_xy"
+        param_3d = "beamforming_dist_xy" if only_xy else "beamforming_dist"
         color_range = [0, df["beamforming_dist"].max()]
     elif category == "Interquartile Range":
-        param_3d = "iqr_dist"
-        param_2d = "iqr_dist"
-        color_range = [0, df["iqr_dis"].max()]
+        param_3d = "iqr_dist"  # Hier gibt es keine Unterscheidung für xy
+        color_range = [0, df["iqr_dist"].max()]
     elif category == "Mean Absolute Error":
-        param_3d = "mae_coord"
-        param_2d = "mae_xy"
+        param_3d = "mae_xy" if only_xy else "mae_coord"
         color_range = [0, df["mae_coord"].max()]
     elif category == "Mean Difference":
         axis = st.sidebar.selectbox("Select Axis", ["x", "y", "z"])
-        param_3d = f"mean_diff_{axis}"
-        param_2d = f"mean_diff_{axis}"
+        param_3d = f"mean_diff_{axis}"  # Keine Unterscheidung für xy hier
         color_range = [0, df[f"mean_diff_{axis}"].max()]
     elif category == "Mean Distance":
-        param_3d = "mean_dist"
-        param_2d = "mean_dist_xy"
+        param_3d = "mean_dist_xy" if only_xy else "mean_dist"
         color_range = [0, df["mean_dist"].max()]
     elif category == "Median Distance":
-        param_3d = "median_dist"
-        param_2d = "median_dist_xy"
+        param_3d = "median_dist_xy" if only_xy else "median_dist"
         color_range = [0, df["median_dist"].max()]
     elif category == "Standard Deviation":
-        param_3d = "coord_std"
-        param_2d = "coord_std_xy"
-        color_range = [df["coord_std"].min(), df["coord_std"].max()]
+        param_3d = "coord_std_xy" if only_xy else "coord_std"
+        color_range = [df[param_3d].min(), df[param_3d].max()]
     else:
         st.error("Unknown category selected.")
         return
@@ -196,17 +190,10 @@ def main():
     description = get_parameter_description(category, distance=distance if category == "Accuracy" else None, axis=axis if category == "Mean Difference" else None)
     st.markdown(f"{description}") 
 
-    col1, col2 = st.columns(2)
+    fig_3d = plot_3d(df, f"{param_3d}", param_3d, cmap, color_range)
+    st.plotly_chart(fig_3d, use_container_width=True)
     
-    with col1:
-        fig_3d = plot_3d(df, f"{param_3d}", param_3d, cmap, color_range)
-        st.plotly_chart(fig_3d, use_container_width=True)
-    
-    with col2:
-        fig_2d = plot_2d(df, f"{param_2d}", param_2d, cmap, color_range)
-        st.plotly_chart(fig_2d, use_container_width=True)
-            
-
+        
 
 if __name__ == "__main__":
     main()
